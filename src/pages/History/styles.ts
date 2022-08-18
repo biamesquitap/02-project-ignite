@@ -5,7 +5,6 @@ import styled from "styled-components";
     padding: 3.5rem;
     display: flex;
     flex-direction: column;
-    //background-color: ${props => props.theme['gray-800']};
 
     h1 {
       font-size: 1rem;
@@ -59,4 +58,31 @@ import styled from "styled-components";
         }
       }
     }
-  `;
+  `
+
+    const STATUS_COLORS = {
+      yellow: 'yellow-500',
+      green: 'green-500',
+      red: 'red-500',
+    } as const
+
+    interface StatusProps {
+      statusColor:keyof typeof STATUS_COLORS;
+    }
+
+  export const Status = styled.span<statusColor>`
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    &::before {
+      content: '';
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: 50%;
+      background: ${props => props.theme[STATUS_COLORS[props.statusColor]]};
+
+    }
+
+
+  `
