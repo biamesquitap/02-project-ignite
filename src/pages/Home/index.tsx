@@ -6,15 +6,12 @@ import { useEffect, useState } from "react";
 import { differenceInSeconds } from 'date-fns'
 
 import {
-  CountdownContainer,
-  FormContainer,
   HomeContainer,
-  MinutesAmountInput,
-  Separator,
   StartCountdownButton,
   StopCountdownButton,
-  TaskInput,
 } from "./styles";
+import { NewCycleForm } from "./NewCycleForm";
+import { Countdown } from "./Countdown";
 
 
 const newCycleForValidationSchema = zod.object({
@@ -30,6 +27,7 @@ interface Cycle {
   minutesAmount: number
   startDate: Date
   interruptedDate?: Date
+  finishedDate?: Date
 }
 
 export function Home() {
@@ -47,19 +45,36 @@ export function Home() {
 
   const activeCycle = cycles.find((cycle) => cycle.id == activeCycleId)
 
+  const totalSeconds = activeCycle ? activeCycle.minutesAmount * 60 : 0
+
   useEffect(() => {
     let interval: number
 
     if (activeCycle) {
       interval = setInterval(() => {
-        setAmountSecondsPassed(differenceInSeconds(new Date(), activeCycle.startDate),
-        )
+        const secondsDifference = differenceInSeconds(new Date(), activeCycle.startDate)
+
+        if (secondsDifference >= totalSeconds){
+          setCycles ((state) =>
+           state.map(cycle => {
+            if (cycle.id == activeCycleId) {
+              return { ...cycle, finishedDate: new Date() }
+            } else {
+              return cycle
+            }
+          }),
+          )
+          setAmountSecondsPassed(totalSeconds)
+          clearInterval(interval)
+        } else {
+          setAmountSecondsPassed(secondsDifference)
+        }        
       }, 1000)
     }
     return () => {
       clearInterval(interval)
     }
-  }, [activeCycle])
+  }, [activeCycle, activeCycleId, totalSeconds])
 
   function handleCreateNewCycle(data: NewCycleFormData) {
     const id = String(new Date().getTime());
@@ -78,7 +93,8 @@ export function Home() {
   }
 
   function handleInterruptCycle() {
-    setCycles(cycles.map(cycle => {
+    setCycles(state =>
+      state.map((cycle) => {
       if (cycle.id == activeCycleId) {
         return { ...cycle, interrutedDate: new Date() }
       } else {
@@ -90,7 +106,6 @@ export function Home() {
     setActiveCycleId(null)
   }
 
-  const totalSeconds = activeCycle ? activeCycle.minutesAmount * 60 : 0
   const currentSeconds = activeCycle ? totalSeconds - amountSecondsPassed : 0
   const minutesAmount = Math.floor(currentSeconds / 60)
   const secondsAmount = currentSeconds % 60
@@ -110,45 +125,9 @@ export function Home() {
   return (
     <HomeContainer>
       <form onSubmit={handleSubmit(handleCreateNewCycle)}>
-        <FormContainer>
-          <label htmlFor="task">Vou trabalhar em</label>
-          <TaskInput
-            id="task"
-            list="task-suggestion"
-            placeholder="Nome do seu projeto"
-            disabled={!!activeCycled}
-            {...register('task')}
-          />
+        <NewCycleForm/> 
+        <Countdown/>
 
-          <datalist id="task-suggestion">
-            <option value="Project 1" />
-            <option value="Project 2" />
-            <option value="Cartola" />
-            <option value="Estudar" />
-          </datalist>
-
-          <label htmlFor="minutesAmount">durante</label>
-          <MinutesAmountInput
-            id="minutesAmount"
-            type="number"
-            placeholder="00"
-            step={5}
-            min={5}
-            max={60}
-            disabled={!!activeCycled}
-            {...register('minutesAmount', { valueAsNumber: true })}
-          />
-
-          <span> minutos. </span>
-        </FormContainer>
-
-        <CountdownContainer>
-          <span>{minutes[0]}</span>
-          <span>{minutes[1]}</span>
-          <Separator>:</Separator>
-          <span>{seconds[0]}</span>
-          <span>{seconds[1]}</span>
-        </CountdownContainer>
 
         {activeCycle ? (
           <StopCountdownButton
