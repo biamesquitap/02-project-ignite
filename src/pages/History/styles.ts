@@ -70,7 +70,7 @@ import styled from "styled-components";
       statusColor:keyof typeof STATUS_COLORS;
     }
 
-  export const Status = styled.span<statusColor>`
+  export const Status = styled.span<StatusProps>`
     display: flex;
     align-items: center;
     gap: 0.5rem;
